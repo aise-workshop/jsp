@@ -35,12 +35,12 @@ jobs:
       run: npm test
       
     - name: Generate coverage report
-      run: npm run test -- --coverage
+      run: npm run test:coverage
       continue-on-error: true
       
     - name: Upload coverage to Codecov
       if: matrix.node-version == '18.x'
-      uses: codecov/codecov-action@v3
+      uses: codecov/codecov-action@v4
       continue-on-error: true
       
   build:
@@ -116,7 +116,7 @@ jobs:
         npm run start -- convert test/_fixtures/blog target --analyze-only
         
     - name: Archive analysis results
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@v4
       with:
         name: analysis-results
         path: analysis-result.json
@@ -133,15 +133,15 @@ jobs:
       continue-on-error: true
       
     - name: Run CodeQL Analysis
-      uses: github/codeql-action/init@v2
+      uses: github/codeql-action/init@v3
       with:
         languages: javascript
         
     - name: Autobuild
-      uses: github/codeql-action/autobuild@v2
+      uses: github/codeql-action/autobuild@v3
       
     - name: Perform CodeQL Analysis
-      uses: github/codeql-action/analyze@v2
+      uses: github/codeql-action/analyze@v3
       
   publish:
     runs-on: ubuntu-latest
