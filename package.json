@@ -1,0 +1,33 @@
+{
+  "name": "jsp-to-spring-boot",
+  "version": "1.0.0",
+  "description": "CLI tool to convert JSP projects to Spring Boot",
+  "main": "src/index.js",
+  "bin": {
+    "jsp-convert": "bin/cli.js"
+  },
+  "scripts": {
+    "start": "node src/index.js",
+    "test": "jest",
+    "lint": "eslint src/**/*.js",
+    "format": "prettier --write src/**/*.js"
+  },
+  "keywords": ["jsp", "spring-boot", "conversion", "cli", "java"],
+  "author": "AI Assistant",
+  "license": "MIT",
+  "dependencies": {
+    "commander": "^11.0.0",
+    "fs-extra": "^11.0.0",
+    "path": "^0.12.7",
+    "chalk": "^4.1.2",
+    "inquirer": "^8.2.6"
+  },
+  "devDependencies": {
+    "jest": "^29.0.0",
+    "eslint": "^8.0.0",
+    "prettier": "^3.0.0"
+  },
+  "engines": {
+    "node": ">=14.0.0"
+  }
+}
