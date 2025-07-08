@@ -14,12 +14,12 @@ const logger = winston.createLogger({
   ),
   defaultMeta: { service: 'jsp-to-spring-boot' },
   transports: [
-    new winston.transports.File({ 
-      filename: path.join(process.cwd(), 'logs', 'error.log'), 
-      level: 'error' 
+    new winston.transports.File({
+      filename: path.join(process.cwd(), 'logs', 'error.log'),
+      level: 'error'
     }),
-    new winston.transports.File({ 
-      filename: path.join(process.cwd(), 'logs', 'combined.log') 
+    new winston.transports.File({
+      filename: path.join(process.cwd(), 'logs', 'combined.log')
     })
   ]
 });

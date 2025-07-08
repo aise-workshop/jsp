@@ -4,7 +4,7 @@
 
 // Global test setup
 global.console = {
-  ...console,
+  ...console
   // Uncomment to silence specific console methods during tests
   // log: jest.fn(),
   // debug: jest.fn(),

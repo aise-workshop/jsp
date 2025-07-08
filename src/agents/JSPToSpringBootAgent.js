@@ -29,20 +29,20 @@ class JSPToSpringBootAgent {
 
   async analyzeProject(projectPath) {
     logger.info(`Starting project analysis: ${projectPath}`);
-    
+
     try {
       // Step 1: Analyze project structure
       const structure = await this._analyzeProjectStructure(projectPath);
-      
+
       // Step 2: Identify JSP files and patterns
       const jspAnalysis = await this._analyzeJSPFiles(structure);
-      
+
       // Step 3: Analyze Java servlets and controllers
       const servletAnalysis = await this._analyzeServlets(structure);
-      
+
       // Step 4: Generate conversion plan
       const conversionPlan = await this._generateConversionPlan(jspAnalysis, servletAnalysis);
-      
+
       return {
         success: true,
         structure,
@@ -61,7 +61,7 @@ class JSPToSpringBootAgent {
 
   async convertProject(sourcePath, targetPath, options = {}) {
     logger.info(`Starting conversion from ${sourcePath} to ${targetPath}`);
-    
+
     try {
       // First analyze the project
       const analysis = await this.analyzeProject(sourcePath);
@@ -71,9 +71,9 @@ class JSPToSpringBootAgent {
 
       // Execute conversion plan
       const results = await this._executeConversionPlan(
-        analysis.conversionPlan, 
-        sourcePath, 
-        targetPath, 
+        analysis.conversionPlan,
+        sourcePath,
+        targetPath,
         options
       );
 
@@ -93,7 +93,7 @@ class JSPToSpringBootAgent {
 
   async _analyzeProjectStructure(projectPath) {
     const listTool = this.tools.get('list_dir');
-    
+
     // Get project structure recursively
     const result = await listTool.execute({
       dirPath: projectPath,
@@ -173,7 +173,7 @@ class JSPToSpringBootAgent {
       const content = await readTool.execute({ filePath: javaFile.path });
       if (content.success) {
         const analysis = this._analyzeJavaContent(content.content, javaFile.path);
-        
+
         if (analysis.isController) {
           servletAnalysis.controllers.push({ ...javaFile, analysis });
         } else if (analysis.isStrategy) {
@@ -192,7 +192,7 @@ class JSPToSpringBootAgent {
   _analyzeJSPContent(content) {
     const patterns = new Set();
     const dependencies = new Set();
-    
+
     // Look for JSP patterns
     if (content.includes('<%@')) patterns.add('jsp_directive');
     if (content.includes('<%=')) patterns.add('jsp_expression');
@@ -200,7 +200,7 @@ class JSPToSpringBootAgent {
     if (content.includes('${')) patterns.add('el_expression');
     if (content.includes('<c:')) patterns.add('jstl_core');
     if (content.includes('<fmt:')) patterns.add('jstl_fmt');
-    
+
     // Extract imports and dependencies
     const importMatches = content.match(/<%@\s+page\s+import="([^"]+)"/g);
     if (importMatches) {
@@ -222,12 +222,12 @@ class JSPToSpringBootAgent {
   _analyzeJavaContent(content, filePath) {
     const patterns = new Set();
     const fileName = path.basename(filePath);
-    
+
     // Identify file types
     const isController = content.includes('@WebServlet') || content.includes('extends HttpServlet');
     const isStrategy = fileName.includes('Strategy') || content.includes('implements Strategy');
     const isRepository = fileName.includes('Repository') || content.includes('Repository');
-    
+
     // Look for patterns
     if (content.includes('@WebServlet')) patterns.add('servlet_annotation');
     if (content.includes('doGet')) patterns.add('http_get');
@@ -235,7 +235,7 @@ class JSPToSpringBootAgent {
     if (content.includes('RequestDispatcher')) patterns.add('request_dispatcher');
     if (content.includes('sendRedirect')) patterns.add('redirect');
     if (content.includes('HttpSession')) patterns.add('session_management');
-    
+
     return {
       isController,
       isStrategy,
@@ -249,7 +249,7 @@ class JSPToSpringBootAgent {
     const lines = content.split('\n').length;
     const methods = (content.match(/public\s+\w+\s+\w+\s*\(/g) || []).length;
     const conditions = (content.match(/if\s*\(/g) || []).length;
-    
+
     return {
       lines,
       methods,
@@ -295,14 +295,14 @@ class JSPToSpringBootAgent {
     return plan;
   }
 
-  async _executeConversionPlan(plan, sourcePath, targetPath, options) {
+  async _executeConversionPlan(plan, sourcePath, targetPath, _options) {
     const results = [];
-    
+
     for (const task of plan.tasks) {
       try {
         logger.info(`Executing task: ${task.type}`);
-        
-        const result = await this._executeTask(task, sourcePath, targetPath, options);
+
+        const result = await this._executeTask(task, sourcePath, targetPath, _options);
         results.push({
           task,
           result,
@@ -321,23 +321,23 @@ class JSPToSpringBootAgent {
     return results;
   }
 
-  async _executeTask(task, sourcePath, targetPath, options) {
+  async _executeTask(task, sourcePath, targetPath, _options) {
     switch (task.type) {
-      case 'convert_servlet_to_controller':
-        return await this._convertServletToController(task, sourcePath, targetPath);
-      case 'convert_jsp_to_thymeleaf':
-        return await this._convertJSPToThymeleaf(task, sourcePath, targetPath);
-      case 'generate_spring_boot_config':
-        return await this._generateSpringBootConfig(task, targetPath);
-      default:
-        throw new Error(`Unknown task type: ${task.type}`);
+    case 'convert_servlet_to_controller':
+      return await this._convertServletToController(task, sourcePath, targetPath);
+    case 'convert_jsp_to_thymeleaf':
+      return await this._convertJSPToThymeleaf(task, sourcePath, targetPath);
+    case 'generate_spring_boot_config':
+      return await this._generateSpringBootConfig(task, targetPath);
+    default:
+      throw new Error(`Unknown task type: ${task.type}`);
     }
   }
 
   async _convertServletToController(task, sourcePath, targetPath) {
     const readTool = this.tools.get('read_file');
     const writeTool = this.tools.get('write_file');
-    
+
     const sourceContent = await readTool.execute({ filePath: task.source });
     if (!sourceContent.success) {
       throw new Error(sourceContent.error);
@@ -345,7 +345,7 @@ class JSPToSpringBootAgent {
 
     // Transform servlet to Spring Boot controller
     const transformedContent = this._transformServletToController(sourceContent.content);
-    
+
     const targetFilePath = path.join(targetPath, task.target);
     const writeResult = await writeTool.execute({
       filePath: targetFilePath,
@@ -358,7 +358,7 @@ class JSPToSpringBootAgent {
   async _convertJSPToThymeleaf(task, sourcePath, targetPath) {
     const readTool = this.tools.get('read_file');
     const writeTool = this.tools.get('write_file');
-    
+
     const sourceContent = await readTool.execute({ filePath: task.source });
     if (!sourceContent.success) {
       throw new Error(sourceContent.error);
@@ -366,7 +366,7 @@ class JSPToSpringBootAgent {
 
     // Transform JSP to Thymeleaf
     const transformedContent = this._transformJSPToThymeleaf(sourceContent.content);
-    
+
     const targetFilePath = path.join(targetPath, task.target);
     const writeResult = await writeTool.execute({
       filePath: targetFilePath,
@@ -379,17 +379,17 @@ class JSPToSpringBootAgent {
   _transformServletToController(content) {
     // Basic servlet to Spring Boot controller transformation
     let transformed = content;
-    
+
     // Replace servlet annotations with Spring annotations
     transformed = transformed.replace(/@WebServlet.*\n/g, '@RestController\n@RequestMapping("/api")\n');
     transformed = transformed.replace(/extends HttpServlet/, 'extends Object');
-    
+
     // Transform doGet/doPost methods
     transformed = transformed.replace(
       /protected void doGet\(HttpServletRequest request, HttpServletResponse response\)/g,
       '@GetMapping\npublic ResponseEntity<?> get(HttpServletRequest request, HttpServletResponse response)'
     );
-    
+
     transformed = transformed.replace(
       /protected void doPost\(HttpServletRequest request, HttpServletResponse response\)/g,
       '@PostMapping\npublic ResponseEntity<?> post(HttpServletRequest request, HttpServletResponse response)'
@@ -403,24 +403,24 @@ import org.springframework.stereotype.Controller;
 
     // Insert imports after package declaration
     transformed = transformed.replace(/(package [^;]+;)/, `$1\n\n${imports}`);
-    
+
     return transformed;
   }
 
   _transformJSPToThymeleaf(content) {
     // Basic JSP to Thymeleaf transformation
     let transformed = content;
-    
+
     // First, replace JSTL forEach with Thymeleaf (before touching EL expressions)
     // Use multiline regex to handle content spanning lines
     transformed = transformed.replace(
       /<c:forEach\s+var="([^"]+)"\s+items="\$\{([^}]+)\}">([^]*?)<\/c:forEach>/g,
       '<div th:each="$1 : ${$2}">$3</div>'
     );
-    
+
     // Then replace remaining JSP expressions with Thymeleaf
     transformed = transformed.replace(/\$\{([^}]+)\}/g, '<span th:text="${$1}"></span>');
-    
+
     // Add Thymeleaf namespace
     if (!transformed.includes('xmlns:th=')) {
       transformed = transformed.replace(
@@ -428,13 +428,13 @@ import org.springframework.stereotype.Controller;
         '<html$1 xmlns:th="http://www.thymeleaf.org">'
       );
     }
-    
+
     return transformed;
   }
 
   async _generateSpringBootConfig(task, targetPath) {
     const writeTool = this.tools.get('write_file');
-    
+
     const config = `spring:
   application:
     name: jsp-to-spring-boot

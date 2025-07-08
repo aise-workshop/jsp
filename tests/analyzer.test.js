@@ -4,7 +4,6 @@
 
 const BusinessLogicAnalyzer = require('../src/analyzers/BusinessLogicAnalyzer');
 const path = require('path');
-const fs = require('fs-extra');
 
 // Mock the logger
 jest.mock('../src/utils/logger', () => ({
@@ -26,7 +25,7 @@ describe('BusinessLogicAnalyzer', () => {
   describe('Logic Pattern Analysis', () => {
     test('should analyze servlet patterns', async () => {
       const patterns = await analyzer._analyzeServletPatterns(testProjectPath);
-      
+
       expect(patterns).toBeDefined();
       expect(typeof patterns.strategyPattern).toBe('boolean');
       expect(typeof patterns.daoPattern).toBe('boolean');
@@ -35,14 +34,14 @@ describe('BusinessLogicAnalyzer', () => {
 
     test('should detect strategy pattern in blog project', async () => {
       const patterns = await analyzer._analyzeServletPatterns(testProjectPath);
-      
+
       // The blog project should have strategy pattern
       expect(patterns.strategyPattern).toBe(true);
     });
 
     test('should analyze JSP patterns', async () => {
       const patterns = await analyzer._analyzeJSPPatterns(testProjectPath);
-      
+
       expect(patterns).toBeDefined();
       expect(typeof patterns.jstlUsage).toBe('boolean');
       expect(typeof patterns.elExpressions).toBe('boolean');
@@ -51,7 +50,7 @@ describe('BusinessLogicAnalyzer', () => {
 
     test('should analyze complete business logic', async () => {
       const analysis = await analyzer.analyzeLogicPatterns(testProjectPath);
-      
+
       expect(analysis).toBeDefined();
       expect(analysis.timestamp).toBeDefined();
       expect(analysis.projectPath).toBe(testProjectPath);
@@ -67,7 +66,7 @@ describe('BusinessLogicAnalyzer', () => {
   describe('Screenshot Functionality', () => {
     test('should capture mock screenshots', async () => {
       const result = await analyzer.captureApplicationScreenshots('http://localhost:8080');
-      
+
       expect(result.success).toBe(true);
       expect(result.screenshots).toBeDefined();
       expect(Array.isArray(result.screenshots)).toBe(true);
@@ -78,13 +77,13 @@ describe('BusinessLogicAnalyzer', () => {
     test('should capture screenshots for custom endpoints', async () => {
       const endpoints = ['/custom1', '/custom2'];
       const result = await analyzer.captureApplicationScreenshots(
-        'http://localhost:8080', 
+        'http://localhost:8080',
         endpoints
       );
-      
+
       expect(result.success).toBe(true);
       expect(result.screenshots.length).toBe(endpoints.length);
-      
+
       result.screenshots.forEach((screenshot, index) => {
         expect(screenshot.endpoint).toBe(endpoints[index]);
         expect(screenshot.url).toBe(`http://localhost:8080${endpoints[index]}`);
@@ -96,7 +95,7 @@ describe('BusinessLogicAnalyzer', () => {
   describe('Data Flow Analysis', () => {
     test('should analyze request and response flow', async () => {
       const dataFlow = await analyzer._analyzeDataFlow(testProjectPath);
-      
+
       expect(dataFlow).toBeDefined();
       expect(Array.isArray(dataFlow.requestFlow)).toBe(true);
       expect(Array.isArray(dataFlow.responseFlow)).toBe(true);
@@ -109,7 +108,7 @@ describe('BusinessLogicAnalyzer', () => {
   describe('Security Analysis', () => {
     test('should analyze security patterns', async () => {
       const security = await analyzer._analyzeSecurityPatterns(testProjectPath);
-      
+
       expect(security).toBeDefined();
       expect(Array.isArray(security.authenticationMechanisms)).toBe(true);
       expect(Array.isArray(security.authorizationChecks)).toBe(true);
@@ -124,10 +123,10 @@ describe('BusinessLogicAnalyzer', () => {
   describe('Helper Methods', () => {
     test('should find files by pattern', async () => {
       const javaFiles = await analyzer._findFiles(testProjectPath, '*.java');
-      
+
       expect(Array.isArray(javaFiles)).toBe(true);
       expect(javaFiles.length).toBeGreaterThan(0);
-      
+
       javaFiles.forEach(file => {
         expect(file.endsWith('.java')).toBe(true);
       });
@@ -147,7 +146,7 @@ describe('BusinessLogicAnalyzer', () => {
       `;
 
       const methods = analyzer._extractMethods(content, ['doGet', 'doPost']);
-      
+
       expect(Array.isArray(methods)).toBe(true);
       expect(methods.length).toBe(2);
     });
@@ -159,7 +158,7 @@ describe('BusinessLogicAnalyzer', () => {
       `;
 
       const redirects = analyzer._extractRedirects(content);
-      
+
       expect(Array.isArray(redirects)).toBe(true);
       expect(redirects.length).toBeGreaterThan(0);
     });
@@ -178,7 +177,7 @@ describe('BusinessLogicAnalyzer', () => {
       });
 
       const summary = analyzer._generateSummary();
-      
+
       expect(summary).toBeDefined();
       expect(summary.totalProjects).toBe(1);
       expect(summary.latestAnalysis).toBeDefined();
@@ -187,7 +186,7 @@ describe('BusinessLogicAnalyzer', () => {
 
     test('should handle empty analysis results', () => {
       const summary = analyzer._generateSummary();
-      
+
       expect(summary).toBeDefined();
       expect(summary.message).toBe('No analyses performed yet');
     });
@@ -211,18 +210,18 @@ describe('BusinessLogicAnalyzer', () => {
       };
 
       const recommendations = analyzer._generateRecommendations(mockAnalysis);
-      
+
       expect(Array.isArray(recommendations)).toBe(true);
       expect(recommendations.length).toBeGreaterThan(0);
-      
+
       // Should recommend converting strategy pattern
       const strategyRec = recommendations.find(r => r.title.includes('Strategy Pattern'));
       expect(strategyRec).toBeDefined();
-      
+
       // Should recommend JSTL to Thymeleaf migration
       const jstlRec = recommendations.find(r => r.title.includes('JSTL to Thymeleaf'));
       expect(jstlRec).toBeDefined();
-      
+
       // Should recommend CSRF protection
       const csrfRec = recommendations.find(r => r.title.includes('CSRF Protection'));
       expect(csrfRec).toBeDefined();

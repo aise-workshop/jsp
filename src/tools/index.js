@@ -13,7 +13,7 @@ class Tool {
     this.description = description;
   }
 
-  async execute(params) {
+  async execute(_params) {
     throw new Error('Tool execute method must be implemented');
   }
 }
@@ -26,13 +26,13 @@ class ListDirTool extends Tool {
   async execute({ dirPath, recursive = false, filter = null }) {
     try {
       logger.info(`Listing directory: ${dirPath}`);
-      
+
       if (!await fs.pathExists(dirPath)) {
         throw new Error(`Directory does not exist: ${dirPath}`);
       }
 
       const items = [];
-      
+
       if (recursive) {
         await this._listRecursive(dirPath, items, filter);
       } else {
@@ -65,10 +65,10 @@ class ListDirTool extends Tool {
 
   async _listRecursive(dirPath, items, filter) {
     const entries = await fs.readdir(dirPath, { withFileTypes: true });
-    
+
     for (const entry of entries) {
       const fullPath = path.join(dirPath, entry.name);
-      
+
       if (!filter || filter(entry.name)) {
         items.push({
           name: entry.name,
@@ -93,7 +93,7 @@ class ReadFileTool extends Tool {
   async execute({ filePath, encoding = 'utf8' }) {
     try {
       logger.info(`Reading file: ${filePath}`);
-      
+
       if (!await fs.pathExists(filePath)) {
         throw new Error(`File does not exist: ${filePath}`);
       }
@@ -104,7 +104,7 @@ class ReadFileTool extends Tool {
       }
 
       const content = await fs.readFile(filePath, encoding);
-      
+
       return {
         success: true,
         content,
@@ -129,15 +129,15 @@ class WriteFileTool extends Tool {
   async execute({ filePath, content, encoding = 'utf8', createDirs = true }) {
     try {
       logger.info(`Writing file: ${filePath}`);
-      
+
       if (createDirs) {
         await fs.ensureDir(path.dirname(filePath));
       }
 
       await fs.writeFile(filePath, content, encoding);
-      
+
       const stats = await fs.stat(filePath);
-      
+
       return {
         success: true,
         path: filePath,

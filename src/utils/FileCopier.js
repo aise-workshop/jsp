@@ -13,39 +13,39 @@ class FileCopier {
   }
 
   async copyJavaFiles(sourcePath, targetPath, options = {}) {
-    const { 
-      includeTests = false, 
-      preserveStructure = true, 
-      filter = null 
+    const {
+      includeTests = false,
+      preserveStructure = true,
+      filter = null
     } = options;
 
     try {
       logger.info(`Copying Java files from ${sourcePath} to ${targetPath}`);
-      
+
       const javaFiles = await this._findJavaFiles(sourcePath, includeTests);
       const results = [];
 
       for (const file of javaFiles) {
         try {
           const targetFile = this._calculateTargetPath(file, sourcePath, targetPath, preserveStructure);
-          
+
           if (filter && !filter(file.path)) {
             continue;
           }
 
           await fs.ensureDir(path.dirname(targetFile));
           await fs.copy(file.path, targetFile);
-          
+
           const result = {
             source: file.path,
             target: targetFile,
             size: file.size,
             success: true
           };
-          
+
           results.push(result);
           this.copiedFiles.push(result);
-          
+
           logger.info(`Copied: ${file.path} -> ${targetFile}`);
         } catch (error) {
           logger.error(`Error copying ${file.path}: ${error.message}`);
@@ -74,24 +74,24 @@ class FileCopier {
 
   async _findJavaFiles(sourcePath, includeTests) {
     const files = [];
-    
+
     const processDirectory = async (dirPath) => {
       const entries = await fs.readdir(dirPath, { withFileTypes: true });
-      
+
       for (const entry of entries) {
         const fullPath = path.join(dirPath, entry.name);
-        
+
         if (entry.isDirectory()) {
           // Skip certain directories
           if (entry.name === 'target' || entry.name === 'node_modules' || entry.name === '.git') {
             continue;
           }
-          
+
           // Skip test directories if not including tests
           if (!includeTests && (entry.name === 'test' || entry.name === 'tests')) {
             continue;
           }
-          
+
           await processDirectory(fullPath);
         } else if (entry.isFile() && entry.name.endsWith('.java')) {
           const stats = await fs.stat(fullPath);
@@ -122,10 +122,10 @@ class FileCopier {
     try {
       const content = await fs.readFile(sourcePath, 'utf8');
       const transformedContent = await transformer(content, sourcePath);
-      
+
       await fs.ensureDir(path.dirname(targetPath));
       await fs.writeFile(targetPath, transformedContent);
-      
+
       this.copiedFiles.push({
         source: sourcePath,
         target: targetPath,
@@ -153,7 +153,7 @@ class FileCopier {
 
   async cleanup() {
     logger.info('Cleaning up copied files (as per requirements)');
-    
+
     const results = [];
     for (const copied of this.copiedFiles) {
       try {

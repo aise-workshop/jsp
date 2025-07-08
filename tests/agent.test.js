@@ -36,7 +36,7 @@ describe('JSPToSpringBootAgent', () => {
       const result = await agent.useTool('list_dir', {
         dirPath: testProjectPath
       });
-      
+
       expect(result.success).toBe(true);
       expect(result.items).toBeDefined();
       expect(Array.isArray(result.items)).toBe(true);
@@ -50,7 +50,7 @@ describe('JSPToSpringBootAgent', () => {
   describe('Project Analysis', () => {
     test('should analyze project structure', async () => {
       const analysis = await agent.analyzeProject(testProjectPath);
-      
+
       expect(analysis.success).toBe(true);
       expect(analysis.structure).toBeDefined();
       expect(analysis.jspAnalysis).toBeDefined();
@@ -60,7 +60,7 @@ describe('JSPToSpringBootAgent', () => {
 
     test('should categorize files correctly', async () => {
       const analysis = await agent.analyzeProject(testProjectPath);
-      
+
       if (analysis.success) {
         expect(analysis.structure.javaFiles.length).toBeGreaterThan(0);
         expect(analysis.structure.configFiles.length).toBeGreaterThan(0);
@@ -69,7 +69,7 @@ describe('JSPToSpringBootAgent', () => {
 
     test('should handle non-existent project path', async () => {
       const analysis = await agent.analyzeProject('/non/existent/path');
-      
+
       expect(analysis.success).toBe(false);
       expect(analysis.error).toBeDefined();
     });
@@ -91,7 +91,7 @@ describe('JSPToSpringBootAgent', () => {
       `;
 
       const analysis = agent._analyzeJSPContent(jspContent);
-      
+
       expect(analysis.patterns).toContain('jsp_directive');
       expect(analysis.patterns).toContain('el_expression');
       expect(analysis.patterns).toContain('jstl_core');
@@ -115,7 +115,7 @@ describe('JSPToSpringBootAgent', () => {
       `;
 
       const analysis = agent._analyzeJavaContent(servletContent, '/path/to/TestServlet.java');
-      
+
       expect(analysis.isController).toBe(true);
       expect(analysis.patterns).toContain('servlet_annotation');
       expect(analysis.patterns).toContain('http_get');
@@ -139,7 +139,7 @@ describe('JSPToSpringBootAgent', () => {
       `;
 
       const transformed = agent._transformServletToController(servletContent);
-      
+
       expect(transformed).toContain('@RestController');
       expect(transformed).toContain('@RequestMapping("/api")');
       expect(transformed).toContain('@GetMapping');
@@ -159,7 +159,7 @@ describe('JSPToSpringBootAgent', () => {
       `;
 
       const transformed = agent._transformJSPToThymeleaf(jspContent);
-      
+
       expect(transformed).toContain('xmlns:th="http://www.thymeleaf.org"');
       expect(transformed).toContain('th:text');
       expect(transformed).toContain('th:each');
@@ -181,13 +181,13 @@ describe('Individual Tools', () => {
   describe('ListDirTool', () => {
     test('should list directory contents', async () => {
       const tool = new ListDirTool();
-      
+
       // Create test files
       await fs.writeFile(path.join(tempDir, 'test.txt'), 'test content');
       await fs.ensureDir(path.join(tempDir, 'subdir'));
 
       const result = await tool.execute({ dirPath: tempDir });
-      
+
       expect(result.success).toBe(true);
       expect(result.items.length).toBeGreaterThan(0);
       expect(result.items.some(item => item.name === 'test.txt')).toBe(true);
@@ -197,7 +197,7 @@ describe('Individual Tools', () => {
     test('should handle non-existent directory', async () => {
       const tool = new ListDirTool();
       const result = await tool.execute({ dirPath: '/non/existent' });
-      
+
       expect(result.success).toBe(false);
       expect(result.error).toBeDefined();
     });
@@ -208,11 +208,11 @@ describe('Individual Tools', () => {
       const tool = new ReadFileTool();
       const testFile = path.join(tempDir, 'test.txt');
       const testContent = 'Hello, World!';
-      
+
       await fs.writeFile(testFile, testContent);
-      
+
       const result = await tool.execute({ filePath: testFile });
-      
+
       expect(result.success).toBe(true);
       expect(result.content).toBe(testContent);
       expect(result.size).toBe(testContent.length);
@@ -221,7 +221,7 @@ describe('Individual Tools', () => {
     test('should handle non-existent file', async () => {
       const tool = new ReadFileTool();
       const result = await tool.execute({ filePath: '/non/existent.txt' });
-      
+
       expect(result.success).toBe(false);
       expect(result.error).toBeDefined();
     });
@@ -232,15 +232,15 @@ describe('Individual Tools', () => {
       const tool = new WriteFileTool();
       const testFile = path.join(tempDir, 'output.txt');
       const testContent = 'Hello, World!';
-      
-      const result = await tool.execute({ 
-        filePath: testFile, 
-        content: testContent 
+
+      const result = await tool.execute({
+        filePath: testFile,
+        content: testContent
       });
-      
+
       expect(result.success).toBe(true);
       expect(result.path).toBe(testFile);
-      
+
       // Verify file was written
       const written = await fs.readFile(testFile, 'utf8');
       expect(written).toBe(testContent);
@@ -250,13 +250,13 @@ describe('Individual Tools', () => {
       const tool = new WriteFileTool();
       const testFile = path.join(tempDir, 'nested', 'dir', 'output.txt');
       const testContent = 'Hello, World!';
-      
-      const result = await tool.execute({ 
-        filePath: testFile, 
+
+      const result = await tool.execute({
+        filePath: testFile,
         content: testContent,
         createDirs: true
       });
-      
+
       expect(result.success).toBe(true);
       expect(await fs.pathExists(testFile)).toBe(true);
     });
