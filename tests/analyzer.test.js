@@ -78,7 +78,8 @@ describe('BusinessLogicAnalyzer', () => {
       const endpoints = ['/custom1', '/custom2'];
       const result = await analyzer.captureApplicationScreenshots(
         'http://localhost:8080',
-        endpoints
+        endpoints,
+        { usePuppeteer: false } // 保证测试走 mock 路径，避免依赖 Puppeteer
       );
 
       expect(result.success).toBe(true);
