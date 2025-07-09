@@ -1,0 +1,28 @@
+server:
+  port: 8080
+  servlet:
+    context-path: 
+spring:
+  application:
+    name: jsp-converted-app
+  datasource:
+    url: jdbc:h2:mem:testdb
+    username: sa
+    password: 
+    driver-class-name: org.h2.Driver
+  jpa:
+    hibernate:
+      ddl-auto: create-drop
+    show-sql: true
+    database-platform: org.hibernate.dialect.H2Dialect
+  thymeleaf:
+    cache: false
+    prefix: classpath:/templates/
+    suffix: .html
+logging:
+  level:
+    com:
+      com.example.app: DEBUG
+    org:
+      springframework:
+        web: DEBUG

@@ -4,12 +4,16 @@
  */
 
 const { ListDirTool, ReadFileTool, WriteFileTool } = require('../tools');
+const JSPToThymeleafTransformer = require('../transformers/JSPToThymeleafTransformer');
+const SpringBootConfigGenerator = require('../transformers/SpringBootConfigGenerator');
 const logger = require('../utils/logger');
 const path = require('path');
 
 class JSPToSpringBootAgent {
   constructor() {
     this.tools = new Map();
+    this.jspTransformer = new JSPToThymeleafTransformer();
+    this.configGenerator = new SpringBootConfigGenerator();
     this._initializeTools();
   }
 
@@ -74,7 +78,8 @@ class JSPToSpringBootAgent {
         analysis.conversionPlan,
         sourcePath,
         targetPath,
-        options
+        options,
+        analysis
       );
 
       return {
@@ -295,14 +300,14 @@ class JSPToSpringBootAgent {
     return plan;
   }
 
-  async _executeConversionPlan(plan, sourcePath, targetPath, _options) {
+  async _executeConversionPlan(plan, sourcePath, targetPath, _options, analysis) {
     const results = [];
 
     for (const task of plan.tasks) {
       try {
         logger.info(`Executing task: ${task.type}`);
 
-        const result = await this._executeTask(task, sourcePath, targetPath, _options);
+        const result = await this._executeTask(task, sourcePath, targetPath, _options, analysis);
         results.push({
           task,
           result,
@@ -321,14 +326,14 @@ class JSPToSpringBootAgent {
     return results;
   }
 
-  async _executeTask(task, sourcePath, targetPath, _options) {
+  async _executeTask(task, sourcePath, targetPath, _options, analysis) {
     switch (task.type) {
     case 'convert_servlet_to_controller':
       return await this._convertServletToController(task, sourcePath, targetPath);
     case 'convert_jsp_to_thymeleaf':
       return await this._convertJSPToThymeleaf(task, sourcePath, targetPath);
     case 'generate_spring_boot_config':
-      return await this._generateSpringBootConfig(task, targetPath);
+      return await this._generateSpringBootConfig(task, targetPath, analysis);
     default:
       throw new Error(`Unknown task type: ${task.type}`);
     }
@@ -356,24 +361,17 @@ class JSPToSpringBootAgent {
   }
 
   async _convertJSPToThymeleaf(task, sourcePath, targetPath) {
-    const readTool = this.tools.get('read_file');
-    const writeTool = this.tools.get('write_file');
+    const sourceFilePath = path.resolve(sourcePath, task.source);
+    const targetFilePath = path.join(targetPath, task.target);
 
-    const sourceContent = await readTool.execute({ filePath: task.source });
-    if (!sourceContent.success) {
-      throw new Error(sourceContent.error);
+    // Use the JSP to Thymeleaf transformer
+    const result = await this.jspTransformer.transformJSPFile(sourceFilePath, targetFilePath);
+
+    if (!result.success) {
+      throw new Error(result.error);
     }
 
-    // Transform JSP to Thymeleaf
-    const transformedContent = this._transformJSPToThymeleaf(sourceContent.content);
-
-    const targetFilePath = path.join(targetPath, task.target);
-    const writeResult = await writeTool.execute({
-      filePath: targetFilePath,
-      content: transformedContent
-    });
-
-    return writeResult;
+    return result;
   }
 
   _transformServletToController(content) {
@@ -432,46 +430,23 @@ import org.springframework.stereotype.Controller;
     return transformed;
   }
 
-  async _generateSpringBootConfig(task, targetPath) {
-    const writeTool = this.tools.get('write_file');
+  async _generateSpringBootConfig(task, targetPath, projectAnalysis) {
+    // Use the Spring Boot configuration generator
+    const result = await this.configGenerator.generateConfiguration(
+      { logicAnalysis: projectAnalysis },
+      targetPath,
+      {
+        applicationName: 'jsp-converted-app',
+        basePackage: 'com.example.app',
+        serverPort: 8080
+      }
+    );
 
-    const config = `spring:
-  application:
-    name: jsp-to-spring-boot
-  datasource:
-    url: jdbc:postgresql://localhost:5432/blog
-    username: blog
-    password: blog
-    driver-class-name: org.postgresql.Driver
-  jpa:
-    hibernate:
-      ddl-auto: update
-    show-sql: true
-    properties:
-      hibernate:
-        dialect: org.hibernate.dialect.PostgreSQLDialect
-  thymeleaf:
-    prefix: classpath:/templates/
-    suffix: .html
-    mode: HTML
-    encoding: UTF-8
-    servlet:
-      content-type: text/html
+    if (!result.success) {
+      throw new Error(result.error);
+    }
 
-server:
-  port: 8080
-
-logging:
-  level:
-    com.example: DEBUG
-    org.springframework: INFO
-`;
-
-    const targetFilePath = path.join(targetPath, 'src/main/resources', task.target);
-    return await writeTool.execute({
-      filePath: targetFilePath,
-      content: config
-    });
+    return result;
   }
 
   async useTool(toolName, params) {

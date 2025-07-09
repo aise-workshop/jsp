@@ -53,16 +53,26 @@ class BusinessLogicAnalyzer {
     }
   }
 
-  async captureApplicationScreenshots(baseUrl, endpoints = []) {
+  async captureApplicationScreenshots(baseUrl, endpoints = [], options = {}) {
     logger.info(`Capturing screenshots for comparison: ${baseUrl}`);
 
+    const { usePuppeteer = true, timeout = 30000 } = options;
     const screenshots = [];
 
     try {
-      // This is a placeholder for Puppeteer integration
-      // We'll implement this with a mock for now due to installation issues
-      const mockScreenshots = await this._mockCaptureScreenshots(baseUrl, endpoints);
-      screenshots.push(...mockScreenshots);
+      if (usePuppeteer) {
+        try {
+          const realScreenshots = await this._realCaptureScreenshots(baseUrl, endpoints, timeout);
+          screenshots.push(...realScreenshots);
+        } catch (puppeteerError) {
+          logger.warn(`Puppeteer failed, falling back to mock: ${puppeteerError.message}`);
+          const mockScreenshots = await this._mockCaptureScreenshots(baseUrl, endpoints);
+          screenshots.push(...mockScreenshots);
+        }
+      } else {
+        const mockScreenshots = await this._mockCaptureScreenshots(baseUrl, endpoints);
+        screenshots.push(...mockScreenshots);
+      }
 
       return {
         success: true,
@@ -113,58 +123,75 @@ class BusinessLogicAnalyzer {
     return mockScreenshots;
   }
 
-  async _realCaptureScreenshots(baseUrl, endpoints) {
-    // Real Puppeteer implementation (commented out due to installation issues)
-    /*
+  async _realCaptureScreenshots(baseUrl, endpoints, timeout = 30000) {
+    // Real Puppeteer implementation
     const puppeteer = require('puppeteer');
-    const browser = await puppeteer.launch({ headless: true });
-    const page = await browser.newPage();
 
-    await fs.ensureDir(this.screenshotPath);
+    let browser;
+    try {
+      browser = await puppeteer.launch({
+        headless: true,
+        args: ['--no-sandbox', '--disable-setuid-sandbox']
+      });
+      const page = await browser.newPage();
 
-    const screenshots = [];
-    const defaultEndpoints = endpoints.length > 0 ? endpoints : [
-      '/',
-      '/posts',
-      '/posts/create',
-      '/posts/1',
-      '/posts/1/edit'
-    ];
+      // Set viewport and timeout
+      await page.setViewport({ width: 1280, height: 720 });
+      page.setDefaultTimeout(timeout);
 
-    for (const endpoint of defaultEndpoints) {
-      try {
-        const url = `${baseUrl}${endpoint}`;
-        await page.goto(url, { waitUntil: 'networkidle2' });
+      await fs.ensureDir(this.screenshotPath);
 
-        const filename = `${endpoint.replace(/\//g, '_') || 'home'}_${Date.now()}.png`;
-        const filepath = path.join(this.screenshotPath, filename);
+      const screenshots = [];
+      const defaultEndpoints = endpoints.length > 0 ? endpoints : [
+        '/',
+        '/posts',
+        '/posts/create',
+        '/posts/1',
+        '/posts/1/edit'
+      ];
 
-        await page.screenshot({
-          path: filepath,
-          fullPage: true
-        });
+      for (const endpoint of defaultEndpoints) {
+        try {
+          const url = `${baseUrl}${endpoint}`;
+          logger.info(`Capturing screenshot for: ${url}`);
 
-        screenshots.push({
-          endpoint,
-          filename,
-          filepath,
-          url,
-          timestamp: new Date().toISOString()
-        });
+          await page.goto(url, {
+            waitUntil: 'networkidle2',
+            timeout: timeout
+          });
 
-        logger.info(`Screenshot captured: ${filepath}`);
+          const filename = `${endpoint.replace(/\//g, '_') || 'home'}_${Date.now()}.png`;
+          const filepath = path.join(this.screenshotPath, filename);
 
-      } catch (error) {
-        logger.error(`Error capturing screenshot for ${endpoint}: ${error.message}`);
+          await page.screenshot({
+            path: filepath,
+            fullPage: true
+          });
+
+          screenshots.push({
+            endpoint,
+            filename,
+            filepath,
+            url,
+            timestamp: new Date().toISOString(),
+            mock: false
+          });
+
+          logger.info(`Screenshot captured: ${filepath}`);
+
+        } catch (error) {
+          logger.error(`Error capturing screenshot for ${endpoint}: ${error.message}`);
+          // Continue with other endpoints even if one fails
+        }
+      }
+
+      return screenshots;
+
+    } finally {
+      if (browser) {
+        await browser.close();
       }
     }
-
-    await browser.close();
-    return screenshots;
-    */
-
-    // For now, return mock data
-    return await this._mockCaptureScreenshots(baseUrl, endpoints);
   }
 
   async _analyzeServletPatterns(projectPath) {

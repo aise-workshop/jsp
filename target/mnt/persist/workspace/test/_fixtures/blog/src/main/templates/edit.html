@@ -1,0 +1,23 @@
+<!-- JSP Taglib Directive: uri="http://java.sun.com/jsp/jstl/core" prefix="c"  -->
+<!-- JSP Page Directive: contentType="text/html;charset=UTF-8" language="java"  -->
+<!-- JSP Page Directive: isELIgnored="false"  -->
+<html xmlns:th="http://www.thymeleaf.org">
+  <head>
+    <title>Edit</title>
+    <link rel="stylesheet" href="/css/styles.css">
+      </head>
+      <body>
+        <h2>Edit post <c:out value="\"<span th:text="${post.title}"></span>\""/></h2>
+        <form action="/posts/${post.postId}/edit" method="post" th:action="@{/}" method="post">
+          <h4>Title:</h4>
+          <input class="text_title" type="text" name="title" th:field="*{title}" value="${post.title}" required/>
+          <h4>Context:</h4>
+          <textarea class="text_title" name="context" required>
+            <span th:text="${post.postedText}"></span>
+            </textarea>
+            <br/>
+            <br/>
+            <input class="value_center" type="submit" name="save" th:field="*{save}" value="Save"/>
+            </form>
+            </body>
+            </html>

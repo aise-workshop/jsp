@@ -1,0 +1,27 @@
+<!-- JSP Taglib Directive: uri="http://java.sun.com/jsp/jstl/core" prefix="c"  -->
+<!-- JSP Taglib Directive: prefix="fmt" uri="http://java.sun.com/jsp/jstl/fmt"  -->
+<!-- JSP Page Directive: contentType="text/html;charset=UTF-8" language="java"  -->
+<!-- JSP Page Directive: isELIgnored="false"  -->
+<html xmlns:th="http://www.thymeleaf.org">
+  <head>
+    <title>First blog :)</title>
+    <link rel="stylesheet" href="/css/styles.css">
+      </head>
+      <body>
+        <div class="max_width_400">
+          <div th:each="post : ${posts}">
+            <h3><span th:text="${post.title}"></span></h3>
+            <p><span th:text="${formatter.format(post.postedDate)}"></span></p>
+            <p>
+              <span th:text="${post.postedText}"></span>
+              </p>
+              <a href="posts/<span th:text="${post.postId}"></span>"> Continue</a>
+              <br/>
+              </div>
+              </div>
+              <br/>
+              <form action="/posts" method="get" th:action="@{/}" method="post">
+                <input type="submit" name="create" th:field="*{create}" value="Create new post"/>
+                </form>
+                </body>
+                </html>
