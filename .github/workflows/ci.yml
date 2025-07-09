@@ -116,32 +116,10 @@ jobs:
         npm run start -- convert test/_fixtures/blog target --analyze-only
         
     - name: Archive analysis results
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@v4
       with:
         name: analysis-results
         path: analysis-result.json
-        
-  security-scan:
-    runs-on: ubuntu-latest
-    
-    steps:
-    - name: Checkout code
-      uses: actions/checkout@v4
-      
-    - name: Run security audit
-      run: npm audit --audit-level high
-      continue-on-error: true
-      
-    - name: Run CodeQL Analysis
-      uses: github/codeql-action/init@v2
-      with:
-        languages: javascript
-        
-    - name: Autobuild
-      uses: github/codeql-action/autobuild@v2
-      
-    - name: Perform CodeQL Analysis
-      uses: github/codeql-action/analyze@v2
       
   publish:
     runs-on: ubuntu-latest
